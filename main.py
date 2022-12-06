@@ -51,25 +51,29 @@ BUYEE_NAME, BUYEE_MATRIC, BUYEE_CCA, BUYEE_EVENT, NUM_RECEIPTS, RECEIPT_TYPE, RE
 num_images = 0
 supp_images = 0
 
+
 def listfiles(path):
-    for file in os.listdir(path):
-        if os.path.isfile(os.path.join(path, file)):
-            yield file
+  for file in os.listdir(path):
+    if os.path.isfile(os.path.join(path, file)):
+      yield file
+
 
 def clear_folder(folder_name):
   for f in listfiles(folder_name):
     os.remove("./images/" + f)
 
+
 def attach_docs(folder_name, msg):
-  
+
   for f in listfiles(folder_name):
-      part = MIMEBase('application', "octet-stream")
-      part.set_payload(open("./images/" + f, "rb").read())
-      encoders.encode_base64(part)
-      part.add_header('Content-Disposition', 'attachment', filename=f)
-      msg.attach(part)
+    part = MIMEBase('application', "octet-stream")
+    part.set_payload(open("./images/" + f, "rb").read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', 'attachment', filename=f)
+    msg.attach(part)
   return msg
-    
+
+
 # Initialize flask app and bot
 app = Flask(__name__)
 bot = Bot(BOT_TOKEN)
@@ -159,12 +163,14 @@ def cancelSetup(update, context):
 #################################
 
 
-def online_receipt(update, context):
+def receipt(update, context):
   clear_folder("./images")
-  num_images = 0
-  supp_images = 0
   print("get authorisation letter names", "\n")
   context.user_data['Students'] = []
+  global num_images, supp_images
+
+  num_images = 0
+  supp_images = 0
 
   update.message.reply_text(BUYEE_NAME_PROMPT)
   return BUYEE_NAME
@@ -178,7 +184,7 @@ def buyee_name(update, context):
   if text.lower() == 'ok':
     update.message.reply_text(BUYEE_CCA_PROMPT)
     return BUYEE_CCA
-  
+
   context.user_data['Students'].append(text)
   update.message.reply_text(BUYEE_MATRIC_PROMPT)
   return BUYEE_MATRIC
@@ -223,6 +229,7 @@ def num_receipts(update, context):
 
   text = int(update.message.text)
   context.user_data['TotalReceipts'] = text
+  context.user_data['ReceiptCount'] = text
   reply_keyboard = [["Online", "Physical"]]
   update.message.reply_text(RECEIPT_TYPE_PROMPT,
                             reply_markup=ReplyKeyboardMarkup(
@@ -267,8 +274,8 @@ def receipt_image(update, context):
   photo_file = update.message.photo[-1].get_file()
   photo_file.download("images/user_photo{}.jpg".format(num_images))
   user_data = context.user_data
-  if ("TotalReceipts" in user_data and user_data["TotalReceipts"] > 1):
-    user_data["TotalReceipts"] = user_data["TotalReceipts"] - 1
+  if ("TotalReceipts" in user_data and user_data["ReceiptCount"] > 1):
+    user_data["ReceiptCount"] = user_data["ReceiptCount"] - 1
     reply_keyboard = [["Online", "Physical"]]
     update.message.reply_text(RECEIPT_TYPE_PROMPT,
                               reply_markup=ReplyKeyboardMarkup(
@@ -319,6 +326,9 @@ def confirmation(update, context):
   print("print summary")
   print(context.user_data, "\n")
 
+  reply_text = "Okay, generating email now! Check your email for the draft claims template to be sent to the Finance D!"
+  update.message.reply_text(reply_text, reply_markup=ReplyKeyboardRemove())
+
   # process data
   user_data = context.user_data
   if not "TreasurerEmail" in context.user_data:
@@ -327,7 +337,7 @@ def confirmation(update, context):
     context.user_data["TreasurerName"] = tmp[0]
     context.user_data["TreasurerPhone"] = tmp[1]
     context.user_data["TreasurerEmail"] = tmp[2]
-  
+
   if not ("Physical" in user_data):
     context.user_data["Physical"] = 0
 
@@ -353,12 +363,6 @@ def confirmation(update, context):
   send_email(context.user_data)
   clear_folder("./images")
 
-  reply_text = ""
-  user_data = context.user_data
-  for key in user_data:
-    reply_text = reply_text + "{}: {}\n".format(key, user_data[key])
-  update.message.reply_text(reply_text, reply_markup=ReplyKeyboardRemove())
-
   return ConversationHandler.END
 
 
@@ -376,8 +380,8 @@ def invalid(update, context):
 ### Handlers ###
 ################
 
-online_receipt_handler = ConversationHandler(
-  entry_points=[CommandHandler("onlinereceipt", online_receipt)],
+receipt_handler = ConversationHandler(
+  entry_points=[CommandHandler("receipt", receipt)],
   states={
     BUYEE_NAME: [MessageHandler(Filters.text & ~Filters.command, buyee_name)],
     BUYEE_MATRIC:
@@ -410,7 +414,7 @@ userSetupHandler = ConversationHandler(
 
 dispatcher = Dispatcher(bot, None)
 dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(online_receipt_handler)
+dispatcher.add_handler(receipt_handler)
 dispatcher.add_handler(userSetupHandler)
 
 #######################################
