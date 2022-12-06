@@ -1,0 +1,66 @@
+<html>
+  <head></head>
+  <body>
+    Dear Rene,<br>
+      
+    Attached is {{ CCA }} for {{ Event }}.<br><br>
+    
+    {% for student in Students %}
+    To whom it may concern,<br>
+      
+    I, {{ student.name }}, Matric No. ({{ student.matric }}), hereby authorise my treasurer, Rene, to collect reimbursement on my behalf.<br>
+      
+    Best regards,<br>
+      
+    {{ student.name }}<br>
+    {% endfor %}
+
+    <br>
+    <table style="border-collapse: collapse;">
+      <tr >
+        <th colspan="2" style="border: 2px solid black;">Claim Summary</th>
+      </tr>
+      <tr>
+        <td style="border: 2px solid black;">CCA</td>
+        <td style="border: 2px solid black;">{{ CCA }}</td>
+      </tr>
+      <tr>
+        <td style="border: 2px solid black;">Event</td>
+        <td style="border: 2px solid black;">{{ Event }}</td>
+      </tr>
+      <tr>
+        <td style="border: 2px solid black;">CCA Treasurer</td>
+        <td style="border: 2px solid black;">{{ TreasurerName }}</td>
+      </tr>
+      <tr>
+        <td style="border: 2px solid black;">Treasurer's phone number for paynow</td>
+        <td style="border: 2px solid black;">{{ TreasurerPhone }}</td>
+      </tr>
+      <tr>
+        <td style="border: 2px solid black;">Total collated amount</td>
+        <td style="border: 2px solid black;">{{ TotalAmount }}</td>
+      </tr>
+      <tr>
+        <td style="border: 2px solid black;">Total number of receipts</td>
+        <td style="border: 2px solid black;">{{ TotalReceipts }}</td>
+      </tr>
+    </table>
+    <br>
+    
+    Purpose of purchase for each receipt:<br>
+      
+    {% for receipt in Receipts %}
+      
+    #{{ receipt.count }}: Amount: {{ receipt.amount }}, Vendor: {{ receipt.vendor }}, Purpose: {{ receipt.purpose }}, Date: {{ receipt.date }}<br>
+      
+    {% endfor %}<br><br>
+  
+    Remarks:<br>
+      
+    1. The expenses are claimed under {{ BudgetCategory }}.<br>
+      
+    {{ Online }} E-receipts attached.<br>
+      
+    {{ Physical }} Physical receipts attached.<br>
+  </body>
+</html>
